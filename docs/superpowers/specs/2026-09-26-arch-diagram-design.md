@@ -68,6 +68,7 @@ type Node struct {
     ID      string   // import path (or module path for collapsed deps)
     Kind    NodeKind // Local | Std | External
     Dir     string   // module-relative directory ("" for non-local)
+    Module  string   // owning module path (external only; used to collapse deps)
     Files   []string // sorted .go file names (local only)
     Exports []string // sorted exported identifiers (local only)
     Errors  []string // load/type errors for this package
@@ -108,7 +109,9 @@ type Layout struct {
 1. `git rev-parse <base>` → SHA.
 2. Base graph: cache hit at `$XDG_CACHE_HOME/archdiag/<module-hash>/<sha>.json` → load;
    otherwise `git worktree add --detach <tmp> <sha>`, extract, write cache, remove worktree.
-   The cache key also includes the archdiag extractor version and the filter flags.
+   The cache key also includes the archdiag extractor version. The cache holds the
+   unfiltered graph; `--std`/`--deps` filtering is applied after loading, so changing
+   flags never invalidates the cache.
 3. Extract the current working tree.
 4. `diff` → `layout` → store as current state.
 5. Serve `GET /` (full templ page), `GET /events` (SSE), `GET /node/{id}` (details panel), `/static/*`.
