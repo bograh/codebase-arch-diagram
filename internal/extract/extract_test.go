@@ -2,6 +2,8 @@ package extract
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -125,4 +127,15 @@ func contains(edges []model.Edge, e model.Edge) bool {
 		}
 	}
 	return false
+}
+
+func TestExtractModuleWithoutPackages(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module example.com/empty\n\ngo 1.26\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	g := extract(t, dir)
+	if g.Module != "example.com/empty" || len(g.Nodes) != 0 {
+		t.Errorf("graph = %+v, want an empty graph for example.com/empty", g)
+	}
 }

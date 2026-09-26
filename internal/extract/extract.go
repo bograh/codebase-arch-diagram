@@ -3,12 +3,16 @@ package extract
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go/token"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
 
+	"golang.org/x/mod/modfile"
 	"golang.org/x/tools/go/packages"
 
 	"codebase/arch/internal/model"
@@ -39,7 +43,12 @@ func (GoExtractor) Extract(ctx context.Context, dir string) (*model.Graph, error
 	}
 	mainMod := mainModule(pkgs)
 	if mainMod == nil {
-		return nil, fmt.Errorf("no packages of a main module found in %s", dir)
+		// A module with no packages yet (a new project) has an empty graph.
+		mod, err := modulePath(ctx, dir)
+		if err != nil {
+			return nil, fmt.Errorf("no packages of a main module found in %s: %w", dir, err)
+		}
+		return model.NewGraph(mod), nil
 	}
 
 	g := model.NewGraph(mainMod.Path)
@@ -60,6 +69,26 @@ func (GoExtractor) Extract(ctx context.Context, dir string) (*model.Graph, error
 	}
 	g.Normalize()
 	return g, nil
+}
+
+// modulePath reads the module path from the go.mod governing dir.
+func modulePath(ctx context.Context, dir string) (string, error) {
+	cmd := exec.CommandContext(ctx, "go", "env", "GOMOD")
+	cmd.Dir = dir
+	out, err := cmd.Output()
+	gomod := strings.TrimSpace(string(out))
+	if err != nil || gomod == "" || gomod == os.DevNull {
+		return "", errors.New("not inside a Go module")
+	}
+	data, err := os.ReadFile(gomod)
+	if err != nil {
+		return "", fmt.Errorf("read %s: %w", gomod, err)
+	}
+	path := modfile.ModulePath(data)
+	if path == "" {
+		return "", fmt.Errorf("%s declares no module path", gomod)
+	}
+	return path, nil
 }
 
 func mainModule(pkgs []*packages.Package) *packages.Module {
