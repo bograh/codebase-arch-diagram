@@ -119,7 +119,12 @@ func ClusterDOMID(path string) string { return "c-" + path }
 
 func num(v float64) string { return strconv.FormatFloat(v, 'f', 1, 64) }
 
-func viewBox(l *layout.Layout) string { return "0 0 " + num(l.Width) + " " + num(l.Height) }
+// pad is the margin around the diagram, in SVG user units.
+const pad = 16.0
+
+func viewBox(l *layout.Layout) string {
+	return num(-pad) + " " + num(-pad) + " " + num(l.Width+2*pad) + " " + num(l.Height+2*pad)
+}
 
 func statusClass(s diff.Status) string { return "st-" + string(s) }
 
@@ -134,5 +139,5 @@ func sizeAttrs(l *layout.Layout, standalone bool) templ.Attributes {
 	if !standalone {
 		return templ.Attributes{}
 	}
-	return templ.Attributes{"width": num(l.Width), "height": num(l.Height)}
+	return templ.Attributes{"width": num(l.Width + 2*pad), "height": num(l.Height + 2*pad)}
 }

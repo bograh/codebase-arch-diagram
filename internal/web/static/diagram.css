@@ -42,7 +42,7 @@
 .diagram .cluster.touched rect { stroke: var(--changed); stroke-dasharray: 4 3; }
 .diagram .cluster-label { fill: var(--muted); font-size: 11px; }
 .diagram .node { cursor: pointer; }
-.diagram .node rect { fill: var(--node); stroke: var(--node-stroke); stroke-width: 1.2; transition: x .35s ease, y .35s ease, width .35s ease; }
+.diagram .node rect { fill: var(--node); stroke: var(--node-stroke); stroke-width: 1.2; }
 .diagram .node text { fill: var(--fg); pointer-events: none; }
 .diagram .node.kind-std rect, .diagram .node.kind-external rect { fill: var(--dep); }
 .diagram .node.st-added rect { fill: var(--added-bg); stroke: var(--added); stroke-width: 2; }
@@ -50,7 +50,7 @@
 .diagram .node.st-removed text { fill: var(--removed); text-decoration: line-through; }
 .diagram .node.st-changed rect { fill: var(--changed-bg); stroke: var(--changed); stroke-width: 2; }
 .diagram .node .warn { fill: var(--changed); font-size: 11px; }
-.diagram .edge { fill: none; stroke: var(--edge); stroke-width: 1.2; transition: d .35s ease; }
+.diagram .edge { fill: none; stroke: var(--edge); stroke-width: 1.2; }
 .diagram .edge.st-added { stroke: var(--added); stroke-width: 2; }
 .diagram .edge.st-removed { stroke: var(--removed); stroke-dasharray: 5 3; }
 .diagram .arrow-same path { fill: var(--edge); }

@@ -98,7 +98,8 @@
     if (jump) focusOn(jump.dataset.target);
   });
 
-  document.addEventListener("htmx:afterSettle", (e) => {
+  // afterSwap (not afterSettle) so the user's view is back before the next paint.
+  document.addEventListener("htmx:afterSwap", (e) => {
     if (e.target.id === "canvas") sync();
   });
   sync();

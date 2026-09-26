@@ -95,7 +95,7 @@ func TestDiagramMarksStatuses(t *testing.T) {
 
 func TestStandaloneDiagramIsSelfContained(t *testing.T) {
 	html := render(t, Diagram(sampleView().Layout, true))
-	assertContains(t, html, `xmlns="http://www.w3.org/2000/svg"`, `<style>`, `height="300.0"`, `width="400.0"`)
+	assertContains(t, html, `xmlns="http://www.w3.org/2000/svg"`, `<style>`, `height="332.0"`, `width="432.0"`, `viewBox="-16.0 -16.0 432.0 332.0"`)
 }
 
 func TestGroups(t *testing.T) {
