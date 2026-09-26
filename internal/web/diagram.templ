@@ -1,0 +1,39 @@
+package web
+
+import "codebase/arch/internal/layout"
+
+// Diagram draws the laid-out graph. Standalone adds an explicit size and
+// inline styles so the SVG also works outside the app.
+templ Diagram(l *layout.Layout, standalone bool) {
+	<svg id="diagram" class="diagram" xmlns="http://www.w3.org/2000/svg" viewBox={ viewBox(l) } { sizeAttrs(l, standalone)... }>
+		if standalone {
+			@templ.Raw("<style>" + diagramCSS + "</style>")
+		}
+		<defs>
+			for _, st := range []string{"same", "added", "removed"} {
+				<marker id={ "arrow-" + st } class={ "arrow-" + st } viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+					<path d="M0,0 L10,5 L0,10 z"></path>
+				</marker>
+			}
+		</defs>
+		for _, c := range l.Clusters {
+			<g id={ ClusterDOMID(c.Path) } class={ "cluster", templ.KV("touched", c.Touched) }>
+				<rect x={ num(c.X) } y={ num(c.Y) } width={ num(c.W) } height={ num(c.H) } rx="8"></rect>
+				<text class="cluster-label" x={ num(c.X + 8) } y={ num(c.Y + 14) }>{ c.Label }</text>
+			</g>
+		}
+		for _, e := range l.Edges {
+			<path id={ EdgeDOMID(e.From, e.To) } class={ "edge", statusClass(e.Status) } d={ e.D } marker-end={ "url(#arrow-" + string(e.Status) + ")" }></path>
+		}
+		for _, n := range l.Nodes {
+			<g id={ NodeDOMID(n.ID) } class={ "node", statusClass(n.Status), "kind-" + string(n.Kind) } hx-get={ "/node/" + n.ID } hx-target="#details">
+				<title>{ n.ID }</title>
+				<rect x={ num(n.X) } y={ num(n.Y) } width={ num(n.W) } height={ num(n.H) } rx="6"></rect>
+				<text x={ num(n.X + n.W/2) } y={ num(n.Y + n.H/2) } text-anchor="middle" dominant-baseline="central">{ n.Label }</text>
+				if n.HasErrors {
+					<text class="warn" x={ num(n.X + n.W - 9) } y={ num(n.Y + 11) } text-anchor="middle" dominant-baseline="central">⚠</text>
+				}
+			</g>
+		}
+	</svg>
+}

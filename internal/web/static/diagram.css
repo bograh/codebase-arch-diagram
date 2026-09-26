@@ -1,0 +1,61 @@
+/* Diagram styles: used by the app and inlined into standalone SVGs. */
+:root {
+  --bg: #f7f6f3;
+  --panel: #ffffff;
+  --fg: #1f2328;
+  --muted: #656d76;
+  --line: #d0d7de;
+  --node: #ffffff;
+  --node-stroke: #8c959f;
+  --dep: #eef1f4;
+  --cluster: #efede8;
+  --edge: #8c959f;
+  --added: #1a7f37;
+  --added-bg: #dafbe1;
+  --removed: #cf222e;
+  --removed-bg: #ffebe9;
+  --changed: #9a6700;
+  --changed-bg: #fff8c5;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --fg: #e6edf3;
+    --muted: #8d96a0;
+    --line: #30363d;
+    --node: #161b22;
+    --node-stroke: #6e7681;
+    --dep: #21262d;
+    --cluster: #11161d;
+    --edge: #6e7681;
+    --added: #3fb950;
+    --added-bg: #12261e;
+    --removed: #f85149;
+    --removed-bg: #2d1416;
+    --changed: #d29922;
+    --changed-bg: #2b2111;
+  }
+}
+.diagram { font: 12px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); }
+.diagram .cluster rect { fill: var(--cluster); stroke: var(--line); }
+.diagram .cluster.touched rect { stroke: var(--changed); stroke-dasharray: 4 3; }
+.diagram .cluster-label { fill: var(--muted); font-size: 11px; }
+.diagram .node { cursor: pointer; }
+.diagram .node rect { fill: var(--node); stroke: var(--node-stroke); stroke-width: 1.2; transition: x .35s ease, y .35s ease, width .35s ease; }
+.diagram .node text { fill: var(--fg); pointer-events: none; }
+.diagram .node.kind-std rect, .diagram .node.kind-external rect { fill: var(--dep); }
+.diagram .node.st-added rect { fill: var(--added-bg); stroke: var(--added); stroke-width: 2; }
+.diagram .node.st-removed rect { fill: var(--removed-bg); stroke: var(--removed); stroke-dasharray: 5 3; }
+.diagram .node.st-removed text { fill: var(--removed); text-decoration: line-through; }
+.diagram .node.st-changed rect { fill: var(--changed-bg); stroke: var(--changed); stroke-width: 2; }
+.diagram .node .warn { fill: var(--changed); font-size: 11px; }
+.diagram .edge { fill: none; stroke: var(--edge); stroke-width: 1.2; transition: d .35s ease; }
+.diagram .edge.st-added { stroke: var(--added); stroke-width: 2; }
+.diagram .edge.st-removed { stroke: var(--removed); stroke-dasharray: 5 3; }
+.diagram .arrow-same path { fill: var(--edge); }
+.diagram .arrow-added path { fill: var(--added); }
+.diagram .arrow-removed path { fill: var(--removed); }
+.diagram .highlight rect, .diagram path.highlight { stroke: var(--fg); stroke-width: 3; }
+[data-view="base"] .diagram .st-added,
+[data-view="current"] .diagram .st-removed { display: none; }

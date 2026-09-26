@@ -1,0 +1,159 @@
+package web
+
+import (
+	"strconv"
+
+	"codebase/arch/internal/diff"
+)
+
+// Page is the full HTML document.
+templ Page(v View) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>archdiag · { v.Module }</title>
+			<link rel="stylesheet" href="/static/diagram.css"/>
+			<link rel="stylesheet" href="/static/app.css"/>
+			<script src="/static/htmx.min.js"></script>
+			<script src="/static/sse.js"></script>
+			<script src="/static/idiomorph-ext.min.js"></script>
+			<script src="/static/app.js" defer></script>
+		</head>
+		<body>
+			<header class="topbar">
+				<h1>{ v.Module }</h1>
+				<div class="views" role="group" aria-label="Diagram view">
+					<button type="button" data-view="diff" aria-pressed="true">Diff</button>
+					<button type="button" data-view="base" aria-pressed="false">Base</button>
+					<button type="button" data-view="current" aria-pressed="false">Current</button>
+				</div>
+			</header>
+			<main id="main" data-view="diff" hx-ext="sse,morph" sse-connect="/events">
+				<section id="canvas" sse-swap="diagram" hx-swap="morph:innerHTML">
+					@Canvas(v)
+				</section>
+				<aside class="sidebar">
+					<div id="summary" sse-swap="summary" hx-swap="morph:innerHTML">
+						@Summary(v)
+					</div>
+					<div id="details" aria-live="polite">
+						<p class="hint">Click a package to see its details.</p>
+					</div>
+				</aside>
+			</main>
+		</body>
+	</html>
+}
+
+// Canvas is the banner plus the diagram: the payload of the SSE "diagram" event.
+templ Canvas(v View) {
+	if v.Banner != "" {
+		<div class="banner" role="status">{ v.Banner }</div>
+	}
+	if v.Empty() {
+		<p class="empty">No packages to show yet.</p>
+	} else {
+		@Diagram(v.Layout, false)
+	}
+}
+
+// Summary lists what changed: the payload of the SSE "summary" event.
+templ Summary(v View) {
+	<section class="summary">
+		<h2>Changes</h2>
+		if v.BaseSHA != "" {
+			<p class="base">Compared with <code>{ v.BaseRef }</code> at <code>{ shortSHA(v.BaseSHA) }</code></p>
+		} else {
+			<p class="base">No base: showing the current graph only.</p>
+		}
+		if v.Diff != nil {
+			@counts(v.Diff.Summary())
+		}
+		for _, g := range v.Groups() {
+			<details open>
+				<summary>{ g.Title } <span class="count">{ strconv.Itoa(len(g.Items)) }</span></summary>
+				<ul class="items">
+					for _, it := range g.Items {
+						<li><button type="button" class={ "jump", statusClass(g.Status) } data-target={ it.Target }>{ it.Text }</button></li>
+					}
+				</ul>
+			</details>
+		}
+	</section>
+}
+
+templ counts(s diff.Summary) {
+	if s.Empty() {
+		<p class="none">No architectural changes.</p>
+	} else {
+		<dl class="counts">
+			<div>
+				<dt>Packages</dt>
+				<dd>
+					<span class="st-added">+{ strconv.Itoa(s.AddedNodes) }</span>
+					<span class="st-removed">−{ strconv.Itoa(s.RemovedNodes) }</span>
+					<span class="st-changed">~{ strconv.Itoa(s.ChangedNodes) }</span>
+				</dd>
+			</div>
+			<div>
+				<dt>Imports</dt>
+				<dd>
+					<span class="st-added">+{ strconv.Itoa(s.AddedEdges) }</span>
+					<span class="st-removed">−{ strconv.Itoa(s.RemovedEdges) }</span>
+				</dd>
+			</div>
+		</dl>
+	}
+}
+
+// Details is the side panel for one package, loaded by clicking a node.
+templ Details(d NodeDetails) {
+	<article class="details">
+		<header>
+			<h2>{ d.Label }</h2>
+			<span class={ "badge", statusClass(d.Node.Status) }>{ string(d.Node.Status) }</span>
+		</header>
+		<p class="id"><code>{ d.Node.ID }</code></p>
+		if len(d.Node.Errors) > 0 {
+			<h3>Errors</h3>
+			<ul class="errors">
+				for _, e := range d.Node.Errors {
+					<li><code>{ e }</code></li>
+				}
+			</ul>
+		}
+		@delta("Exports", d.Node.AddedExports, d.Node.RemovedExports)
+		@delta("Files", d.Node.AddedFiles, d.Node.RemovedFiles)
+		@links("Imports", d.Imports)
+		@links("Imported by", d.Importers)
+	</article>
+}
+
+templ delta(title string, added, removed []string) {
+	if len(added)+len(removed) > 0 {
+		<h3>{ title }</h3>
+		<ul class="delta">
+			for _, s := range added {
+				<li class="st-added">+ { s }</li>
+			}
+			for _, s := range removed {
+				<li class="st-removed">− { s }</li>
+			}
+		</ul>
+	}
+}
+
+templ links(title string, ls []DetailLink) {
+	<h3>{ title } <span class="count">{ strconv.Itoa(len(ls)) }</span></h3>
+	if len(ls) == 0 {
+		<p class="none">None</p>
+	} else {
+		<ul class="items">
+			for _, l := range ls {
+				<li><button type="button" class={ "jump", statusClass(l.Status) } data-target={ NodeDOMID(l.ID) } hx-get={ "/node/" + l.ID } hx-target="#details">{ l.Label }</button></li>
+			}
+		</ul>
+	}
+}
